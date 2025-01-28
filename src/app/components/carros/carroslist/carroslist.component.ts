@@ -1,3 +1,4 @@
+import { CarroService } from './../../../services/carro.service';
 import { Component, inject, TemplateRef, ViewChild } from '@angular/core';
 import { Carro } from '../../../models/carro';
 import { RouterLink } from '@angular/router';
@@ -19,10 +20,15 @@ export class CarroslistComponent {
   @ViewChild("modalCarroDetalhe") modalCarroDetalhe!: TemplateRef<any>;
   modalRef!: MdbModalRef<any>;
 
+  carroService = inject(CarroService);
+
   carroEdit: Carro = new Carro(0,"");
   lista: Carro[] = [];
 
   constructor(){
+
+    this.findAll();
+
 
     let carroNovo = history.state.carroNovo;
 
@@ -43,14 +49,29 @@ export class CarroslistComponent {
 
     }
 
-    this.lista.push(new Carro(1, 'Fiesta'));
-
-    this.lista.push(new Carro(2, 'Corsa'));
-
-    this.lista.push(new Carro(3, 'Jeep'));
 
 
   }
+
+  findAll(){
+    this.carroService.listAll().subscribe({
+      next: lista => {
+
+        this.lista = lista;
+
+      },
+      error:erro =>{
+
+        Swal.fire({
+          title: 'ocorreu um ero',
+
+          icon: 'error',
+          confirmButtonText: 'Ok'
+        })
+
+      }
+    });
+      }
 
   deleteById(carro: Carro){
 
@@ -64,22 +85,36 @@ export class CarroslistComponent {
             cancelButtonText: "No, cancel!"
           }).then((result) =>{
             if(result.isConfirmed){
-              let indice = this.lista.findIndex(x => {return x.id == carro.id});
-    this.lista.splice(indice, 1);
-    Swal.fire({
-            title: 'deletado com sucesso',
 
-            icon: 'success',
-            confirmButtonText: 'Ok'
-          })
+              this.carroService.delete(carro.id).subscribe({
+                next: mensagem => {
+
+                  Swal.fire({
+                    title: mensagem,
+
+                    icon: 'success',
+                    confirmButtonText: 'Ok'
+                  });
+                  this.findAll();
+
+                },
+                error:erro =>{
+
+                  Swal.fire({
+                    title: 'ocorreu um ero',
+
+                    icon: 'error',
+                    confirmButtonText: 'Ok'
+                  })
+
+                }
+              });
 
             }
           })
-
-
-
-
   }
+
+
   new(){
     this.carroEdit = new Carro(0,"");
     this.modalRef = this.modalService.open(this.modalCarroDetalhe);
